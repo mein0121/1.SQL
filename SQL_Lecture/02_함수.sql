@@ -11,52 +11,9 @@
  RTRIM(값): 오른공백 제거
  TRIM(값): 양쪽 공백 제거
  ************************************* */
-select  upper('abc')
-from    dual;
-
-select  upper(emp_name)
-from    emp;
-
-select emp_name from emp;
-
-select  upper('abcDE') "소문자를대문자로",
-        lower('ABCde') "대문자를소문자로",
-        initcap('abcde abcde abcde') "단어의 첫글자만대문자"
-from dual;
-
-select length('abcdef') "글자수"
-from dual;
-
-select * from emp
-where length(emp_name) > 7;
-
-
-select lpad('abc', 10, '+') "A",
-       length(lpad('abc', 10)),
-       rpad('abc', 10) "B",
-       rpad('123456789', 3) as "C"
-from dual;
-
-select substr('123456789', 2, 5), --2번째 글자부터 5글자만 
-       substr('123456789', 2)
-from dual;
-
-select replace('010-1111-2222', '010','###') from dual;
-select  trim('    abc     ')  "A",
-        ltrim('    abc    ') "B",
-        rtrim('    abc    ') "C"
-from dual;
-
-select * from emp
-where  upper(emp_name) = 'PETER';
-
 
 --EMP 테이블에서 직원의 이름(emp_name)을 모두 대문자, 소문자, 첫글자 대문자, 이름 글자수를 조회
-select  upper(emp_name) "대문자이름",
-        lower(emp_name) "소문자이름",
-        initcap(emp_name) "첫글자만대문자",
-        length(emp_name) "글자수"
-from    emp;        
+
 
 
 -- TODO: EMP 테이블에서 직원의 ID(emp_id), 이름(emp_name), 급여(salary), 부서(dept_name)를 조회. 단 직원이름(emp_name)은 모두 대문자, 부서(dept_name)는 모두 소문자로 출력.
@@ -89,36 +46,13 @@ from    emp;
 /* *************************************
 함수 - 숫자관련 함수
 
-- 결과: 정수,실수
  round(값, 자릿수) : 자릿수이하에서 반올림 (양수 - 실수부, 음수 - 정수부, 기본값 : 0)
  trunc(값, 자릿수) : 자릿수이하에서 절삭(양수 - 실수부, 음수 - 정수부, 기본값: 0)
-- 결과: 정수 
  ceil(값) : 올림
  floor(값) : 내림
- 
  mod(나뉘는수, 나누는수) : 나눗셈의 나머지 연산
  
 ************************************* */
-select round(1.2345, 2),
-       round(1.5678, 2),
-       round(1.5345, 0),
-       round(156.12, -1)
-from dual;
-
-select trunc(1.5678, 2),
-       trunc(156, -2)
-from dual;
-
---ceil/floor : 실수->정수
-select ceil(15.67),
-        floor(15.67)
-from dual;
-
-select round(10/3, 2)
-from dual;
-
-
-select mod(10,3) from dual;-- 10을 3으로 나눴을때 나머지?
 
 --TODO: EMP 테이블에서 각 직원에 대해 직원ID(emp_id), 이름(emp_name), 급여(salary) 그리고 15% 인상된 급여(salary)를 조회하는 질의를 작성하시오.
 --(단, 15% 인상된 급여는 올림해서 정수로 표시하고, 별칭을 "SAL_RAISE"로 지정.)
@@ -138,47 +72,13 @@ select mod(10,3) from dual;-- 10을 3으로 나눴을때 나머지?
 /* *************************************
 함수 - 날짜관련 계산 및 함수
 
-sysdate: 실행시점의 일시
-Date +- 정수 : 일자 계산.
+Date +- 정수 : 날짜 계산.
 months_between(d1, d2) -경과한 개월수(d1이 최근, d2가 과거)
 add_months(d1, 정수) - 정수개월 지난 날짜. 마지막 날짜의 1개월 후는 달의 마지막 날이 된다. 
 next_day(d1, '요일') - d1에서 첫번째 지정한 요일의 날짜. 요일은 한글(locale)로 지정한다.
 last_day(d) - d 달의 마지막날.
 extract(year|month|day from date) - date에서 year/month/day만 추출
 ************************************* */
-select  sysdate,
-        to_char(sysdate, 'yyyy/mm/dd hh24:mi:ss')
-from dual;
---to_char(date값, '날짜형식') : date를 문자열로 변환
-
-select  sysdate+10 "10일후",
-        sysdate-10 "10일전"
-from dual;        
-
-select  months_between(sysdate, '2020/12/28')||'개월',
-        months_between(sysdate, '2019/10/28')||'개월',
-        ceil(months_between(sysdate, '2020/12/26'))||'개월'
-from dual;
-
-
-select  add_months(sysdate, 2), --양수: 2개월후
-        add_months(sysdate, -2), --음수: 2개월전
-        add_months('2021/01/31', 1) 
-from dual;
-
-select  next_day(sysdate, '금요일'),
-        next_day(sysdate, '수요일')
-from dual;        
-
-select last_day(sysdate) from dual;
-select  extract(year from sysdate),
-        extract(month from sysdate),
-        extract(day from sysdate)
-from dual;        
-
-select * from emp
-where extract(month from hire_date) = 11;
-
 --TODO: EMP 테이블에서 부서이름(dept_name)이 'IT'인 직원들의 '입사일(hire_date)로 부터 10일전', 입사일과 '입사일로 부터 10일후',  의 날짜를 조회. 
 
 
@@ -192,8 +92,8 @@ where extract(month from hire_date) = 11;
 --(단 근무 개월수가 실수 일 경우 정수로 반올림. 근무개월수 내림차순으로 정렬.)
 
 
---TODO: 직원 ID(emp_id)가 100 인 직원의 입사일 이후 첫번째 금요일의 날짜를 구하시오.
 
+--TODO: 직원 ID(emp_id)가 100 인 직원의 입사일 이후 첫번째 금요일의 날짜를 구하시오.
 
 /* *************************************
 함수 - 변환 함수
@@ -204,16 +104,10 @@ where extract(month from hire_date) = 11;
 #				# <=to_number()=    #	    			#=to_date()=>	#			#
 #####################################################################################
 
-to_xxxx(값, 형식)
 
 to_char() : 숫자형, 날짜형을 문자형으로 변환
 to_number() : 문자형을 숫자형으로 변환 
 to_date() : 문자형을 날짜형으로 변환
-
-L99999.999
-  45.78
-00000.000
-00345.780
 
 
 형식(format)문자 
@@ -223,7 +117,7 @@ L99999.999
     . : 정수/실수부 구문자.
     ,: 정수부 단위구분자
     'L', '$' : 통화표시. L; 로컬통화기호
-일시 :yyyy : 연도 4자리, yy: 연도 2자리(2000년대), rr: 연도2자리(50이상:90년대, 50미만:2000년대) 
+일시 :yyyy : 연도 4자리, yy: 연도 2자리(2000년대), rr: 연도2자리(50이상:90년대, 50미만:2000년대)
       mm: 월 2자리  (11, 05)
       dd: 일 2자리
       hh24: 시간(00 ~ 23) 2자리, hh(01 ~ 12)
@@ -233,59 +127,17 @@ L99999.999
       am 또는 pm : 오전/오후
 ************************************* */
 
-select 10+to_number('1,000', '9,999') from dual;
-select to_char(100000000, '999,999,999') from dual;
-
-select to_char(salary, 'fm9,999,999.00')
-from emp;
 
 
-select 10+to_number('1,000.53', '9,999.99')
-from dual;
 
-select  to_char(12345678, '999,999,999'),
-        to_char(12345678, 'fm999,999,999'),
-        to_char(12345678, '999,999'),
-        to_char(10000, '$99,999'),
-        to_char(10000, 'L99,999')
-from dual;
-
-
-select  to_char(1234.567, '0,000.000'),
-        to_char(1234.56, '000,000.000'),
-        to_char(1234.56, '999,999.999')
-from dual;
-
-select  to_char(sysdate, 'yyyy-mm-dd hh24:mi:ss'),
-        to_char(sysdate, 'yyyy'),
-        to_char(sysdate, 'day'),
-        to_char(sysdate, 'dy'),
-        to_char(sysdate, 'hh24:mi:ss'),
-        to_char(sysdate, 'yyyy"년" mm"월" dd"일"')
-from dual;
-
-select  to_date('2000/10', 'yyyy/mm') from dual;
 
 -- EMP 테이블에서 업무(job)에 "CLERK"가 들어가는 직원들의 ID(emp_id), 이름(name), 업무(job), 급여(salary)를 조회
 --(급여는 단위 구분자 , 를 사용하고 앞에 $를 붙여서 출력.)
-select  emp_id, 
-        emp_name,
-        job,
-        to_char(salary, 'fm$999,999.00') "salary"
-from   emp
-where  job like '%CLERK%';
-
 
 
 -- 문자열 '20030503' 를 2003년 05월 03일 로 출력.
-select to_char(to_date('20030503', 'yyyymmdd'), 'yyyy"월" mm"일" dd"일"')
-from dual;
 
--- 날짜 : char(8)  yyyymmdd
--- 일시 : char(15) yyyymmddhhmiss
---2021/01/28 16:50:28
---'20210128'
---'20210128165028'
+
 
 -- TODO: 부서명(dept_name)이 'Finance'인 직원들의 ID(emp_id), 이름(emp_name)과 입사년도(hire_date) 4자리만 출력하시오. (ex: 2004);
 --to_char()

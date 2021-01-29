@@ -75,17 +75,18 @@ WHERE UPPER(emp_name) = 'PETER';
 
 SELECT emp_id, emp_name, salary, job
 from emp
-where lower(job) in 'sh_clerk';
+--where lower(job) in 'sh_clerk';
+WHERE initcap(job) = 'Sh_Clerk';
 
 --TODO: 직원 이름(emp_name) 의 자릿수를 15자리로 맞추고 글자수가 모자랄 경우 공백을 앞에 붙여 조회. 끝이 맞도록 조회
-select LPAD(emp_name,15)
+select LPAD(emp_name,15)as emp_name
 from emp;
 
     
 --TODO: EMP 테이블에서 모든 직원의 이름(emp_name)과 급여(salary)를 조회.
 --(단, "급여(salary)" 열을 길이가 7인 문자열로 만들고, 길이가 7이 안될 경우 왼쪽부터 빈 칸을 '_'로 채우시오. EX) ______5000) -LPAD() 이용
 
-select emp_name,lpad(salary,7,'_')
+select emp_name, lpad(salary,7,'_') AS SALARY
 from emp;
 
 -- TODO: EMP 테이블에서 이름(emp_name)이 10글자 이상인 직원들의 이름(emp_name)과 이름의 글자수 조회
@@ -124,20 +125,20 @@ from dual;
 --TODO: EMP 테이블에서 각 직원에 대해 직원ID(emp_id), 이름(emp_name), 급여(salary) 그리고 15% 인상된 급여(salary)를 조회하는 질의를 작성하시오.
 --(단, 15% 인상된 급여는 올림해서 정수로 표시하고, 별칭을 "SAL_RAISE"로 지정.)
 
-select emp_id, emp_name, salary, round(salary*1.15) as "SAL_RAISE"
+select emp_id, emp_name, salary, CEIL(salary*1.15) as SAL_RAISE
 FROM EMP;
 
 --TODO: 위의 SQL문에서 인상 급여(sal_raise)와 급여(salary) 간의 차액을 추가로 조회 (직원ID(emp_id), 이름(emp_name), 15% 인상급여, 인상된 급여와 기존 급여(salary)와 차액)
-select emp_id, emp_name, salary, round(salary*1.15) as "SAL_RAISE", round(salary*1.15)-salary as "차액"
+select emp_id, emp_name, salary, ceil(salary*1.15) as "SAL_RAISE", ceil(salary*1.15)-salary as "차액"
 FROM EMP;
 
 
 -- TODO: EMP 테이블에서 커미션이 있는 직원들의 직원_ID(emp_id), 이름(emp_name), 커미션비율(comm_pct), 커미션비율(comm_pct)을 8% 인상한 결과를 조회.
 --(단 커미션을 8% 인상한 결과는 소숫점 이하 2자리에서 반올림하고 별칭은 comm_raise로 지정)
 
-select emp_id, emp_name, comm_pct, round(comm_pct*1.08,2) as "comm_raise"
-FROM EMP
-where comm_pct is not null;
+select emp_id, emp_name, comm_pct, round(comm_pct*1.08,2) as comm_raise
+FROM EMP;
+--where comm_pct is not null;
 
 /* *************************************
 함수 - 날짜관련 계산 및 함수
@@ -187,12 +188,12 @@ WHERE EXTRACT(MONTH FROM hire_date) = 11;
 
 --TODO: EMP 테이블에서 부서이름(dept_name)이 'IT'인 직원들의 '입사일(hire_date)로 부터 10일전', 입사일과 '입사일로 부터 10일후',  의 날짜를 조회. 
 
-select DEPT_NAME, hire_date - 10 as "10일전", hire_date + 10 as "10일후"
+select DEPT_NAME, hire_date - 10 as "10일전",hire_date, hire_date + 10 as "10일후"
 from emp
 where dept_name in 'IT';
 
 --TODO: 부서가 'Purchasing' 인 직원의 이름(emp_name), 입사 6개월전과 입사일(hire_date), 6개월후 날짜를 조회.
-SELECT EMP_NAME, ADD_MONTHS(HIRE_DATE, 6) as "6개월후", ADD_MONTHS(HIRE_DATE, -6) as "6개월전"
+SELECT EMP_NAME, ADD_MONTHS(HIRE_DATE, -6) as "6개월전", hire_date, ADD_MONTHS(HIRE_DATE, 6) as "6개월후"
 from emp
 where dept_name in 'Purchasing';
 
@@ -205,12 +206,14 @@ FROM EMP;
 -- TODO: 각 직원의 이름(emp_name), 근무 개월수 (입사일에서 현재까지의 달 수)를 계산하여 조회.
 --(단 근무 개월수가 실수 일 경우 정수로 반올림. 근무개월수 내림차순으로 정렬.)
 
-SELECT EMP_NAME, ROUND(MONTHS_BETWEEN(SYSDATE, HIRE_DATE))
+SELECT EMP_NAME, ROUND(MONTHS_BETWEEN(SYSDATE, HIRE_DATE))||' 개월' as 근무개월수
 FROM EMP
-ORDER BY ROUND(MONTHS_BETWEEN(SYSDATE, HIRE_DATE)) DESC;
+--ORDER BY ROUND(MONTHS_BETWEEN(SYSDATE, HIRE_DATE)) DESC;
+--ORDER BY 2 DESC;
+ORDER BY 근무개월수 DESC;
 
 --TODO: 직원 ID(emp_id)가 100 인 직원의 입사일 이후 첫번째 금요일의 날짜를 구하시오.
-SELECT EMP_ID, HIRE_DATE, next_day(HIRE_DATE, '금요일')
+SELECT EMP_ID as 아이디, HIRE_DATE as 입사일, next_day(HIRE_DATE, '금요일') as 금요일
 FROM EMP
 WHERE EMP_ID = 100;
 
@@ -305,7 +308,7 @@ FROM DUAL;
 
 -- TODO: 부서명(dept_name)이 'Finance'인 직원들의 ID(emp_id), 이름(emp_name)과 입사년도(hire_date) 4자리만 출력하시오. (ex: 2004);
 --to_char()
-SELECT EMP_ID, EMP_NAME, to_char(HIRE_DATE, 'yyyy') as "입사년도"
+SELECT EMP_ID, EMP_NAME, to_char(HIRE_DATE, 'yyyy') as "입사년도", EXTRACT(year from hire_date)
 FROM EMP
 WHERE DEPT_NAME IN 'Finance';
 
@@ -313,20 +316,23 @@ WHERE DEPT_NAME IN 'Finance';
 --to_char()
 SELECT EMP_ID, EMP_NAME, HIRE_DATE
 FROM EMP
-WHERE EXTRACT(MONTH FROM HIRE_DATE) = 11;
+WHERE TO_CHAR(HIRE_DATE,'MM') = '11';
+--WHERE EXTRACT(MONTH FROM HIRE_DATE) = 11;
 
 --TODO: 2006년에 입사한 모든 직원의 이름(emp_name)과 입사일(yyyy-mm-dd 형식)을 입사일(hire_date)의 오름차순으로 조회
 --to_char()
-SELECT EMP_NAME, TO_CHAR(HIRE_DATE, 'YYYY-MM-DD')
+SELECT EMP_NAME, TO_CHAR(HIRE_DATE, 'YYYY-MM-DD') AS 입사일
 FROM EMP
-WHERE EXTRACT(YEAR FROM HIRE_DATE) = 2006
+WHERE TO_CHAR(HIRE_DATE, 'YYYY') = 2006
+--WHERE EXTRACT(YEAR FROM HIRE_DATE) = 2006
 ORDER BY HIRE_DATE ASC;
 
 --TODO: 2004년 05월 이후 입사한 직원 조회의 이름(emp_name)과 입사일(hire_date) 조회
 
 SELECT EMP_NAME, HIRE_DATE
 FROM EMP
-WHERE EXTRACT(YEAR FROM HIRE_DATE) >= 2004 AND EXTRACT(MONTH FROM HIRE_DATE) >= 5
+WHERE TO_CHAR(HIRE_DATE, 'YYYYMM') > '200405'
+--WHERE EXTRACT(YEAR FROM HIRE_DATE) >= 2004 AND EXTRACT(MONTH FROM HIRE_DATE) >= 5
 ORDER BY HIRE_DATE ASC;
 
 
@@ -336,13 +342,31 @@ FROM DUAL;
 
 /* *************************************
 함수 - null 관련 함수 
-NVL()
+NVL(expr, 기본값) : expr값이 null이면 기본값을 null이 아니면 expr값을 반환.
 NVL2(expr, nn, null) - expr이 null이 아니면 nn, 널이면 세번째
 nullif(ex1, ex2) 둘이 같으면 null, 다르면 ex1
 
 ************************************* */
+SELECT NVL(null,0),
+nvl(null,'없음'),
+nvl(20,1),
+nvl2(null, 'null아님','null임'),
+nvl2(1, 'null아님','null임')
+from dual;
+
+select nvl2(null, 'null아님','null임'),
+nvl2(17, 'null아님','null임')
+from dual;
+
+select nullif(10,10),
+nullif(10,11)
+from dual;
 
 -- EMP 테이블에서 직원 ID(emp_id), 이름(emp_name), 급여(salary), 커미션비율(comm_pct)을 조회. 단 커미션비율이 NULL인 직원은 0이 출력되도록 한다..
+select emp_id, emp_name, salary, nvl(comm_pct,0) as comm_pct, 
+nvl2(comm_pct, '커미션있음','커미션없음') as comm_pct2
+from emp;
+
 
 
 --TODO: EMP 테이블에서 직원의 ID(emp_id), 이름(emp_name), 업무(job), 부서(dept_name)을 조회. 부서가 없는 경우 '부서미배치'를 출력.
@@ -354,8 +378,10 @@ nullif(ex1, ex2) 둘이 같으면 null, 다르면 ex1
 
 /* *************************************
 DECODE함수와 CASE 문
+- 동등비교
 decode(컬럼, [비교값, 출력값, ...] , else출력) 
-
+- decode():오라클
+- case 표준 구문
 case문 동등비교
 case 컬럼 when 비교값 then 출력값
               [when 비교값 then 출력값]
@@ -367,14 +393,55 @@ case when 조건 then 출력값
        [when 조건 then 출력값]
        [else 출력값]
        end
-
+-- 조건: where의 연산자
 ************************************* */
+
+select decode(dept_name, 'Shipping', '배송', 
+                         'Sales', '영업', 
+                         'Purchasing','구매', 
+                         'Marketing', '마케팅', 
+                         null,'부서없음', 
+                         dept_name) as dept, dept_name
+from emp
+order by dept_name desc;
+
+select case dept_name when 'Shipping' then '배송' 
+                      when 'Sales' then '영업'
+                      when 'Purchasing' then '구매' 
+                      when 'Marketing' then '마케팅' 
+                      else nvl(dept_name,'부서없음') end as dept,
+                      dept_name
+from emp
+order by dept_name desc;
+
+select case when dept_name is null then '미배정'
+            else dept_name end as dept, dept_name
+from emp
+order by dept_name desc;
 --EMP테이블에서 급여와 급여의 등급을 조회하는데 급여 등급은 10000이상이면 '1등급', 10000미만이면 '2등급' 으로 나오도록 조회
 
+select case when salary>=10000 then '1등급'
+            else '2등급' end as 급여등급, salary 
+from emp
+order by 1;
 
 --decode()/case 를 이용한 정렬
 -- 직원들의 모든 정보를 조회한다. 단 정렬은 업무(job)가 'ST_CLERK', 'IT_PROG', 'PU_CLERK', 'SA_MAN' 순서대로 먼저나오도록 한다. (나머지 JOB은 상관없음)
 
+select *
+from emp
+order by decode(job, 'ST_CLERK', '1', 
+                   'IT_PROG','2', 
+                   'PU_CLERK', '3',
+                   'SA_MAN','4', job);
+
+select *
+from emp
+order by case job when 'ST_CLERK' then '1' 
+                  when 'IT_PROG' then '2' 
+                  when 'PU_CLERK' then '3'
+                  when 'SA_MAN' then'4'
+                  else job end;
 
 --TODO: EMP 테이블에서 업무(job)이 'AD_PRES'거나 'FI_ACCOUNT'거나 'PU_CLERK'인 직원들의 ID(emp_id), 이름(emp_name), 업무(job)을 조회. 
 -- 업무(job)가 'AD_PRES'는 '대표', 'FI_ACCOUNT'는 '회계', 'PU_CLERK'의 경우 '구매'가 출력되도록 조회
