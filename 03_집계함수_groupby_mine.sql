@@ -71,17 +71,22 @@ FROM EMP;
 --TODO:  커미션 비율(comm_pct)의 평균을 조회. 
 --소수점 이하 2자리까지 출력
 
-SELECT ROUND(AVG(COMM_PCT),2)
+SELECT ROUND(AVG(COMM_PCT),3),--커미션이 존재하는 직원들만의 평균.
+       round(avg(nvl(comm_pct, 0)),3) as avg -- 전체직원의 평균, nvl로 null인사람을 0으로 지정.
 FROM EMP;
 
 --TODO: 직원 이름(emp_name) 중 사전식으로 정렬할때 가장 나중에 위치할 이름을 조회.
 
-SELECT MAX(EMP_NAME)
+SELECT MAX(EMP_NAME), min(emp_name)
 FROM EMP;
+
+select emp_name
+from emp
+order by 1 desc;
 
 --TODO: 급여(salary)에서 최고 급여액과 최저 급여액의 차액을 출력
 
-SELECT MAX(SALARY) - MIN(SALARY)
+SELECT MAX(SALARY) - MIN(SALARY),MAX(SALARY),  MIN(SALARY)
 FROM EMP;
 
 --TODO: 가장 긴 이름(emp_name)이 몇글자 인지 조회.
@@ -89,10 +94,16 @@ FROM EMP;
 SELECT MAX(LENGTH(EMP_NAME))
 FROM EMP;
 
+SELECT EMP_NAME
+FROM EMP
+where length(emp_name) = (select max(length(emp_name)) from emp); -- subquery
+-- where length(emp_name) = max(length(emp_name)); -- where 절에서는 집계(그룹)함수를 사용 못함.
+
 --TODO: EMP 테이블의 부서(dept_name)가 몇종류가 있는지 조회. 
 -- 고유값들의 개수
 
-SELECT COUNT(DISTINCT DEPT_NAME)
+SELECT count(distinct nvl(dept_name, 'a')) as null포함, --null에 a를 넣어서 null포함해서 셈.
+       COUNT(DISTINCT DEPT_NAME) as null제외 ---null 은빼고 셈.
 FROM EMP;
 
 SELECT DISTINCT DEPT_NAME
@@ -158,18 +169,19 @@ from emp;
 
 SELECT DEPT_NAME, COUNT(*)
 FROM EMP
-GROUP BY DEPT_NAME;
+GROUP BY DEPT_NAME
+order by 2 desc;
 
 --TODO: 업무별(job) 직원수를 조회. 직원수가 많은 것부터 정렬.
 SELECT JOB, COUNT(*)
 FROM EMP
 GROUP BY JOB
-ORDER BY COUNT(*) DESC;
+ORDER BY 2 DESC;
 
 
 --TODO: 부서명(dept_name), 업무(job)별 직원수, 최고급여(salary)를 조회. 부서이름으로 오름차순 정렬.
 
-SELECT DEPT_NAME, JOB, MAX(SALARY)
+SELECT DEPT_NAME, JOB,count(*), MAX(SALARY)
 FROM EMP
 GROUP BY DEPT_NAME, JOB
 ORDER BY DEPT_NAME;
@@ -177,37 +189,39 @@ ORDER BY DEPT_NAME;
 --TODO: EMP 테이블에서 입사연도별(hire_date) 총 급여(salary)의 합계을 조회. 
 --(급여 합계는 자리구분자 , 를 넣으시오. ex: 2,000,000)
 
-SELECT EXTRACT(YEAR FROM HIRE_DATE), TO_CHAR(SUM(SALARY),'9,999,999')
+SELECT EXTRACT(YEAR FROM HIRE_DATE), TO_CHAR(SUM(SALARY),'FM9,999,999')
 FROM EMP
 GROUP BY EXTRACT(YEAR FROM HIRE_DATE);
+
+SELECT TO_CHAR(HIRE_DATE, 'YYYY') AS 입사년도, TO_CHAR(SUM(SALARY), 'FM9,999,999') AS 급여합계
+FROM EMP
+GROUP BY TO_CHAR(HIRE_DATE, 'YYYY');
 
 --TODO: 업무(job)와 입사년도(hire_date)별 평균 급여(salary)을 조회
 
-SELECT EXTRACT(YEAR FROM HIRE_DATE), ROUND(AVG(SALARY),2)
+SELECT JOB, EXTRACT(YEAR FROM HIRE_DATE), ROUND(AVG(SALARY),2)
 FROM EMP
-GROUP BY EXTRACT(YEAR FROM HIRE_DATE);
+GROUP BY JOB, EXTRACT(YEAR FROM HIRE_DATE)
+ORDER BY 1;
 
 --TODO: 부서별(dept_name) 직원수 조회하는데 부서명(dept_name)이 null인 것은 제외하고 조회.
 ---?????
-SELECT COUNT(DEPT_NAME), DEPT_NAME
+SELECT COUNT(*), DEPT_NAME
 FROM EMP
-GROUP BY DEPT_NAME;
-
-SELECT DEPT_NAME, COUNT(*)
-FROM EMP
+WHERE dept_name IS NOT NULL
 GROUP BY DEPT_NAME;
 
 --TODO 급여 범위별 직원수를 출력. 급여 범위는 5000 미만, 5000이상 10000 미만, 10000이상 20000미만, 20000이상. 
---SELECT CASE WHEN SALARY <=5000 THEN '5000 미만'
---            WHEN SALARY >= 5000 AND SALARY < 10000  THEN '5000이상 10000 미만'
---            WHEN SALARY >= 10000 AND SALARY < 20000 THEN '10000이상 20000미만'
---            ELSE '50000 미만' END AS "급여범위", COUNT(*)
---FROM EMP
---GROUP BY CASE WHEN SALARY < 5000 THEN '5000 미만'
---            WHEN SALARY >= 5000 AND SALARY < 10000  THEN '5000이상 10000 미만'
---            WHEN SALARY >= 10000 AND SALARY < 20000 THEN '10000이상 20000미만'
---            ELSE '50000 미만' END;
-
+SELECT CASE WHEN SALARY <5000 THEN '5000 미만'
+            WHEN SALARY BETWEEN 5000 AND 9999.99  THEN '5000이상 10000 미만'
+            WHEN SALARY BETWEEN 10000 AND 19999.99 THEN '10000이상 20000미만'
+            ELSE '20000 이상' END AS "급여범위", COUNT(*)
+FROM EMP
+GROUP BY CASE WHEN SALARY <5000 THEN '5000 미만'
+            WHEN SALARY BETWEEN 5000 AND 9999.99  THEN '5000이상 10000 미만'
+            WHEN SALARY BETWEEN 10000 AND 19999.99 THEN '10000이상 20000미만'
+            ELSE '20000 이상' END
+ORDER BY 2 DESC;
 
 
 /* **************************************************************
@@ -219,20 +233,23 @@ having 절
 ************************************************************** */
 -- 직원수가 10 이상인 부서의 부서명(dept_name)과 직원수를 조회
 
-SELECT DEPT_NAME, COUNT(*)
+SELECT DEPT_NAME, TO_CHAR(SUM(SALARY),'$999,999'), COUNT(*)
 FROM EMP
 GROUP BY dept_name
-HAVING COUNT(*)>=10;
-
+HAVING COUNT(*)>=10
+ORDER BY 2 DESC;
 
 --TODO: 15명 이상이 입사한 년도와 (그 해에) 입사한 직원수를 조회.
 
-SELECT EXTRACT(YEAR FROM HIRE_DATE), COUNT(*)
+SELECT EXTRACT(YEAR FROM HIRE_DATE), COUNT(*), MAX(SALARY)
 FROM EMP
 GROUP BY EXTRACT(YEAR FROM HIRE_DATE)
 HAVING COUNT(*)>=15;
 
-
+SELECT TO_CHAR(HIRE_DATE, 'YYYY'), COUNT(*), MAX(SALARY)
+FROM EMP
+GROUP BY TO_CHAR(HIRE_DATE,'YYYY')
+HAVING COUNT(*)>=15;
 --TODO: 그 업무(job)을 담당하는 직원의 수가 10명 이상인 업무(job)명과 담당 직원수를 조회
 
 SELECT JOB, COUNT(*)
@@ -243,7 +260,7 @@ HAVING COUNT(*) >= 10;
 
 --TODO: 평균 급여가(salary) $5000이상인 부서의 이름(dept_name)과 평균 급여(salary), 직원수를 조회
 
-SELECT DEPT_NAME, ROUND(AVG(SALARY),2)
+SELECT DEPT_NAME, ROUND(AVG(SALARY),2), COUNT(*)
 FROM EMP
 GROUP BY DEPT_NAME
 HAVING AVG(SALARY)>= 5000;
@@ -262,7 +279,8 @@ HAVING AVG(SALARY)>=5000 AND SUM(SALARY)>=50000;
 SELECT DEPT_NAME, ROUND(STDDEV(SALARY),2), COUNT(*)
 FROM EMP
 GROUP BY DEPT_NAME
-HAVING COUNT(*)>=2;
+HAVING COUNT(*)>=2
+ORDER BY 3 DESC;
 
 
 
@@ -341,14 +359,27 @@ FROM EMP
 GROUP BY ROLLUP(DEPT_NAME);
 
 
+SELECT NVL(decode(grouping_id(dept_name),0,DEPT_NAME,
+                                     1,'총계'),'미배치') as 부서, MAX(SALARY), MIN(SALARY)
+FROM EMP
+GROUP BY ROLLUP(DEPT_NAME);
 
 --TODO: 상사_id(mgr_id) 별 직원의 수와 총계를 조회하시오.
 
 select decode(grouping_id(mgr_id),0,nvl(to_char(mgr_id),'상사없음'),
-                                  1,'총계') as 상사ID, max(salary)
+                                  1,'총계') as 상사ID, COUNT(*),max(salary)
 from emp
 group by rollup(mgr_id);
 
+select NVL(decode(grouping_id(mgr_id),0,TO_CHAR(mgr_id),
+                                      1,'총계'),'상사없음') as 상사ID, COUNT(*), max(salary)
+from emp
+group by rollup(mgr_id);
+
+select NVL(decode(grouping_id(mgr_id),1,'총계', --DECODE반환값으로 문자열과 다른타입을 사용할경우 문자열을 먼저 기술.
+                                      0,mgr_id),'상사없음') as 상사ID, COUNT(*), max(salary)
+from emp
+group by rollup(mgr_id);
 
 --TODO: 입사연도(hire_date의 year)별 직원들의 수와 연봉 합계 그리고 총계가 같이 출력되도록 조회.
 
@@ -357,10 +388,33 @@ select decode(grouping_id(EXTRACT(year from hire_date)),0,TO_CHAR(EXTRACT(year f
 from emp
 group by rollup(EXTRACT(year from hire_date));
 
+
+SELECT DECODE(GROUPING_ID(TO_CHAR(HIRE_DATE,'YYYY')),1,'총계',TO_CHAR(HIRE_DATE,'YYYY')),
+       COUNT(*),
+       SUM(SALARY)
+FROM EMP
+GROUP BY ROLLUP(TO_CHAR(HIRE_DATE,'YYYY'));
+
 --TODO: 부서별(dept_name), 입사년도별 평균 급여(salary) 조회. 부서별 집계와 총집계가 같이 나오도록 조회
+
 select decode(grouping_id(dept_name, EXTRACT(year from hire_date)),0,nvl(dept_name,'미배치')||'-'||EXTRACT(year from hire_date),
                                                                    1,nvl(dept_name,'미배치')||' 집계',
                                                                    3,'총계')as 부서별, round(avg(salary),2)
 from emp
 group by rollup(dept_name, EXTRACT(year from hire_date))
 order by dept_name;
+
+SELECT DECODE(GROUPING_ID(DEPT_NAME, TO_CHAR(HIRE_DATE,'YYYY')),0, NVL(DEPT_NAME, '미배치')||'-'||TO_CHAR(HIRE_DATE,'YYYY'),
+                                                                1, NVL(DEPT_NAME, '미배치')||' 중간집계',
+                                                                '총계'),
+       ROUND(AVG(SALARY),2)
+FROM EMP
+GROUP BY ROLLUP(DEPT_NAME, TO_CHAR(HIRE_DATE,'YYYY'))
+ORDER BY DEPT_NAME;
+
+
+SELECT GROUPING_ID(DEPT_NAME, TO_CHAR(HIRE_DATE,'YYYY')),
+       ROUND(AVG(SALARY),2)
+FROM EMP
+GROUP BY ROLLUP(DEPT_NAME, TO_CHAR(HIRE_DATE,'YYYY'))
+ORDER BY DEPT_NAME;

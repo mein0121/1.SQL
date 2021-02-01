@@ -370,11 +370,22 @@ from emp;
 
 
 --TODO: EMP 테이블에서 직원의 ID(emp_id), 이름(emp_name), 업무(job), 부서(dept_name)을 조회. 부서가 없는 경우 '부서미배치'를 출력.
-
+SELECT EMP_ID,
+       EMP_NAME,
+       JOB,
+       NVL(DEPT_NAME, '부서미배치') DEPT_NAME
+FROM EMP
+ORDER BY DEPT_NAME DESC;
 
 --TODO: EMP 테이블에서 직원의 ID(emp_id), 이름(emp_name), 급여(salary), 커미션 (salary * comm_pct)을 조회. 커미션이 없는 직원은 0이 조회되록 한다.
 
-
+SELECT EMP_ID,
+       EMP_NAME,
+       SALARY,
+       NVL(COMM_PCT,0),
+       NVL(SALARY * COMM_PCT,0) AS COMMISSION,
+       SALARY * NVL(COMM_PCT,0) AS COMM
+FROM EMP;
 
 /* *************************************
 DECODE함수와 CASE 문
@@ -447,13 +458,44 @@ order by case job when 'ST_CLERK' then '1'
 -- 업무(job)가 'AD_PRES'는 '대표', 'FI_ACCOUNT'는 '회계', 'PU_CLERK'의 경우 '구매'가 출력되도록 조회
 
 
---TODO: EMP 테이블에서 부서이름(dept_name)과 급여 인상분을 조회. 급여 인상분은 부서이름이 'IT' 이면 급여(salary)에 10%를 'Shipping' 이면 급여(salary)의 20%를 'Finance'이면 30%를 나머지는 0을 출력
+
+SELECT EMP_ID, EMP_NAME,
+       DECODE(JOB, 'AD_PRES', '대표', 'FI_ACCOUNT', '회계', 'PU_CLERK', '구매') "JOB",
+       case job when 'AD_PRES' THEN '대표'
+                WHEN 'FI_ACCOUNT' THEN '회계'
+                WHEN 'PU_CLERK' THEN '구매' END JOB2
+       
+FROM EMP
+WHERE JOB IN ('AD_PRES', 'FI_ACCOUNT', 'PU_CLERK');
+
+
+--TODO: EMP 테이블에서 부서이름(dept_name)과 급여 인상분을 조회. 급여 인상분은 부서이름이 'IT' 이면 급여(salary)에 10%를 
+--'Shipping' 이면 급여(salary)의 20%를 'Finance'이면 30%를 나머지는 0을 출력
 -- decode 와 case문을 이용해 조회
 
+SELECT DEPt_NAME, salary, 
+       DECODE(DEPT_NAME,'IT', '인상안함',
+                        'Shipping', salary*1.2,
+                        'Finance' , salary*1.3,
+                        0) as "급여인상분",
+       case dept_name when 'IT' THEN SALARY * 1.1
+                      WHEN 'Shipping' then salary * 1.2
+                      when 'Finance' then salary*1.3
+                      else 0 end as "급여인상분2"
+FROM EMP;
 
 --TODO: EMP 테이블에서 직원의 ID(emp_id), 이름(emp_name), 급여(salary), 인상된 급여를 조회한다. 
 --단 급여 인상율은 급여가 5000 미만은 30%, 5000이상 10000 미만는 20% 10000 이상은 10% 로 한다.
 
+select emp_id, emp_name, salary,
+      case when salary < 5000 then salary * 1.3
+           --when salary >= 5000 and salary < 10000 then salary * 1.2
+           when salary between 5000 and 9999.99 then salary * 1.2
+           else salary * 1.1 end as 급여인상
+from emp;
 
-
-
+select emp_id, emp_name, salary,
+      case when salary < 5000 then salary * 1.3
+           when  salary >= 10000 then salary * 1.1
+           else salary * 1.2 end as 급여인상
+from emp;
