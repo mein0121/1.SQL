@@ -428,31 +428,115 @@ order by d.dept_name desc;
 
 -- 모든 직원의 id(emp.emp_id), 이름(emp.emp_name), 부서_id(emp.dept_id)를 조회하는데
 -- 부서_id가 80 인 직원들은 부서명(dept.dept_name)과 부서위치(dept.loc) 도 같이 출력한다. (부서 ID가 80이 아니면 null이 나오도록)
+select e.emp_id, 
+       e.emp_name, 
+       d.dept_id, 
+       d.dept_name, 
+       d.loc
+from emp e left join dept d on e.dept_id = d.dept_id and d.dept_id = 80; -- 테이블 추가 조건
+-- from emp e left join dept d on e.dept_id = d.dept_id
+-- where d.dept_id = 80;
 
-
-
+-- 오라클 조인
+select e.emp_id, 
+       e.emp_name, 
+       d.dept_id, 
+       d.dept_name, 
+       d.loc
+from emp e, dept d 
+where e.dept_id = d.dept_id (+) -- join 연산
+and   d.dept_id (+) = 80; -- 타겟에 대한  join 연산
 
 --TODO: 직원_id(emp.emp_id)가 100, 110, 120, 130, 140인 직원의 ID(emp.emp_id), 이름(emp.emp_name), 업무명(job.job_title) 을 조회. 
 -- 업무명이 없을 경우 '미배정' 으로 조회
+
+select e.emp_id, 
+       e.emp_name,
+       nvl(j.job_title, '미배정')
+from emp e left join job j on e.job_id = j.job_id
+where  e.emp_id in (100,110,120,130,140);
+
+select e.emp_id, 
+       e.emp_name,
+       nvl(j.job_title, '미배정')
+from emp e, job j
+where e.job_id = j.job_id(+) and e.emp_id in (100,110,120,130,140);
 
 
 
 --TODO: 부서의 ID(dept.dept_id), 부서이름(dept.dept_name)과 그 부서에 속한 직원들의 수를 조회. 
 --      직원이 없는 부서는 0이 나오도록 조회하고 직원수가 많은 부서 순서로 조회.
+select d.dept_id, 
+       d.dept_name, 
+       count(e.emp_id)
+from dept d left join emp e on e.dept_id = d.dept_id
+group by d.dept_id, d.dept_name
+order by 3 desc;
 
 
+select d.dept_id, d.dept_name, count(emp_id)
+from dept d, emp e
+where e.dept_id(+) = d.dept_id
+group by d.dept_id, d.dept_name
+order by 3 desc;
 
 -- TODO: EMP 테이블에서 부서_ID(emp.dept_id)가 90 인 직원들의 id(emp.emp_id), 이름(emp.emp_name), 상사이름(emp.emp_name), 입사일(emp.hire_date)을 조회. 
 -- 입사일은 yyyy-mm-dd 형식으로 출력
+select e.emp_id as 직원id, 
+       e.emp_name 직원이름,
+       a.emp_name as 상사이름,
+       to_char(e.hire_date, 'yyyy"-"mm"-"dd')
+from emp e left join emp a on e.mgr_id = a.emp_id 
+where e.dept_id = 90;
 
-
-
+select e.emp_id, 
+       e.emp_name,
+       a.emp_name as 상사이름,
+       to_char(e.hire_date, 'yyyy"-"mm"-"dd')
+from emp e, emp a
+where e.mgr_id = a.emp_id(+) and e.dept_id = 90;
 
 
 --TODO 2003년~2005년 사이에 입사한 직원의 id(emp.emp_id), 이름(emp.emp_name), 업무명(job.job_title), 급여(emp.salary), 입사일(emp.hire_date),
 --     상사이름(emp.emp_name), 상사의입사일(emp.hire_date), 소속부서이름(dept.dept_name), 부서위치(dept.loc)를 조회.
 -- 2003년에서 2005년 사이 입사한 직원은 모두 나오도록 조회한다. 
 
+-- select e.*, j.*
+select e.emp_id as "ID", 
+       e.emp_name as "name", 
+       j.job_title, 
+       e.salary,
+       e.hire_date as "입사일",
+       a.emp_name as "상사이름",
+       a.hire_date as "상사입사일",
+       d.dept_name as "부서명",
+       d2.dept_name as "상사부서",
+       d.loc as "위치",
+       d2.loc as "상사위치"
+from emp e left join dept d on e.dept_id = d.dept_id
+           left join job j on e.job_id = j.job_id
+           left join emp a on e.mgr_id = a.emp_id
+           left join dept d2 on d2.dept_id = a.dept_id
+where to_char(e.hire_date, 'yyyy') between '2003' and '2005'
+order by 1;
 
 
-
+select e.emp_id as "ID", 
+       e.emp_name as "name", 
+       j.job_title, 
+       e.salary,
+       e.hire_date as "입사일",
+       a.emp_id as "상사ID",
+       a.emp_name as "상사이름",
+       a.hire_date as "상사입사일",
+       d.dept_name as "부서명",
+       d2.dept_name as "상사부서",
+       d.loc as "위치",
+       d2.loc as "상사위치"
+from emp e, dept d, job j, emp a, dept d2
+where e.dept_id = d.dept_id(+) 
+  and e.mgr_id = a.emp_id(+) 
+  and e.job_id = j.job_id(+) 
+  and a.dept_id = d2.dept_id(+)
+  and to_char(e.hire_date, 'yyyy') between '2003' and '2005'
+order by 1;
