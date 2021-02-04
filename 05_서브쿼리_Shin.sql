@@ -312,33 +312,62 @@ order by e.dept_id;
 /* ******************************************************************************************************************
 EXISTS, NOT EXISTS 연산자 (상관(연관)쿼리와 같이 사용된다)
 -- 서브쿼리의 결과를 만족하는 값이 존재하는지 여부를 확인하는 조건. 조건을 만족하는 행이 여러개라도 한행만 있으면 더이상 검색하지 않는다.
+
+데이터 테이블(고객,장비-부모) -  transaction(내역) 테이블(주문, 대여-자식)
+-- 내역 테이블에서 데이터 테이블의 값이 참조되고 있는지(EXISTS) 없는지(NOT EXISTS)
+-- 고객중에 (한번이상) 주문한 고객?
 **********************************************************************************************************************/
 
 
 -- 직원이 한명이상 있는 부서의 부서ID(dept.dept_id)와 이름(dept.dept_name), 위치(dept.loc)를 조회
-
+SELECT d.dept_id,
+        d.dept_name,
+        d.loc
+from dept d
+where exists (select * 
+              from emp e 
+              where e.dept_id = d.dept_id);
 
 -- 직원이 한명도 없는 부서의 부서ID(dept.dept_id)와 이름(dept.dept_name), 위치(dept.loc)를 조회
 
+select d.dept_id, d.dept_name, d.loc
+from dept d
+where not exists (select * from emp e where e.dept_id = d.dept_id);
 
 -- 부서(dept)에서 연봉(emp.salary)이 13000이상인 한명이라도 있는 부서의 부서ID(dept.dept_id)와 이름(dept.dept_name), 위치(dept.loc)를 조회
 
-
+select d.dept_id, dept_name, d.loc
+from dept d
+where exists (select * from emp e where  e.dept_id = d.dept_id and salary >= 13000);
 
 
 /* ******************************
 주문 관련 테이블들 이용.
 ******************************* */
-
+1. from
+2. where - 행선택 (조건은 행별로 체크 - True인 행이 통과)
 --TODO: 고객(customers) 중 주문(orders)을 한번 이상 한 고객들을 조회.
 
+SELECT *
+FROM customers c
+where exists (select * from orders o where o.cust_id = c.cust_id);
 
 --TODO: 고객(customers) 중 주문(orders)을 한번도 하지 않은 고객들을 조회.
 
+SELECT *
+FROM customers c
+where not exists (select * from orders o where o.cust_id = c.cust_id);
 
 --TODO: 제품(products) 중 한번이상 주문된 제품 정보 조회
+
+select *
+from products p 
+where exists (select * from order_items oi where oi.product_id = p.product_id);
 
 
 --TODO: 제품(products)중 주문이 한번도 안된 제품 정보 조회
 
+select *
+from products p 
+where not exists (select * from order_items oi where oi.product_id = p.product_id);
 
