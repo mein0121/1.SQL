@@ -103,10 +103,18 @@ WHERE salary > (select max(salary)
                 where emp_name in 'John')
 order by emp_id;
 
+select emp_id, emp_name, salary
+from emp
+WHERE salary > all(select salary
+                from emp
+                where emp_name in 'John')
+order by emp_id;
+
+
 -- TODO: 급여(emp.salary)가 가장 높은 직원이 속한 부서의 이름(dept.dept_name), 위치(dept.loc)를 조회.
 
 select d.dept_name, d.loc
-from emp e join dept d on e.dept_id = d.dept_id
+from emp e left join dept d on e.dept_id = d.dept_id
 where salary = (select max(salary)
                 from emp);
 
@@ -114,21 +122,31 @@ where salary = (select max(salary)
 -- TODO: 급여(emp.salary)를 제일 많이 받는 직원들의 이름(emp.emp_name), 부서명(dept.dept_name), 급여(emp.salary) 조회. 
 --       급여는 앞에 $를 붙이고 단위구분자 , 를 출력
 
-select d.dept_name, e.emp_name, to_char(salary, '$999,999.00')
+select d.dept_name, e.emp_name, to_char(salary, 'fm$999,999.00')
 from emp e join dept d on e.dept_id = d.dept_id
 where salary = (select max(salary)
                 from emp);
 
 
--- TODO: 담당 업무ID(emp.job_id) 가 'ST_CLERK'인 직원들의 평균 급여보다 적은 급여를 받는 직원들의 모든 정보를 조회. 단 업무 ID가 'ST_CLERK'이 아닌 직원들만 조회. 
+-- TODO: 담당 업무ID(emp.job_id) 가 'ST_CLERK'인 직원들의 평균 급여보다 적은 급여를 받는 직원들의 모든 정보를 조회. 
+-- 단 업무 ID가 'ST_CLERK'이 아닌 직원들만 조회. 
 
 select *
 from emp
 where salary < (select avg(salary)
                 from emp
                 where job_id in 'ST_CLERK')
-                and job_id not in  'ST_CLERK';
+                and (job_id <> 'ST_CLERK' or job_id is null)
+--( )조건: (job_id가 null이거나 ST_CLERK이 아닌 직원중에서) salary조건에 부합한 사람을 구하라.
+order by salary desc;
 
+select *
+from emp
+where salary < (select avg(salary)
+                from emp
+                where job_id in 'ST_CLERK')
+                and nvl(job_id,'미배치') <> 'ST_CLERK'
+order by salary desc;
 
 -- TODO: 30번 부서(emp.dept_id) 의 평균 급여(emp.salary)보다 급여가 많은 직원들의 모든 정보를 조회.
 
@@ -154,7 +172,11 @@ ORDER BY SALARY DESC;
 -- 입사일은 "yyyy년 mm월 dd일" 형식으로 출력
 -- 급여는 앞에 $를 붙이고 단위구분자 , 를 출력
 
-select emp_id, emp_name, TO_CHAR(HIRE_DATE, 'YYYY"-"MM"-"DD'), dept_id, to_char(salary, '$999,999.00')
+select emp_id, 
+       emp_name, 
+       TO_CHAR(HIRE_DATE, 'YYYY"년" MM"월" DD"일"')as hire_date, 
+       dept_id, 
+       to_char(salary, 'fm$999,999.00') as salary
 from emp
 where salary > (select max(e.salary)
                 from emp e join dept d on e.dept_id = d.dept_id
@@ -218,6 +240,13 @@ where salary > (select min(salary)
 
 -- TODO : 부서 위치(dept.loc) 가 'New York'인 부서에 소속된 직원의 ID(emp.emp_id), 이름(emp.emp_name), 부서_id(emp.dept_id) 를 sub query를 이용해 조회.
 
+select emp_id, emp_name, dept_id
+from emp 
+where dept_id in (select dept_id
+                from dept
+                where loc in 'New York');
+
+
 select e.emp_id, e.emp_name, e.dept_id
 from emp e join dept d on e.dept_id = d.dept_id
 where d.loc in (select loc
@@ -226,6 +255,12 @@ where d.loc in (select loc
 
 
 -- TODO : 최대 급여(job.max_salary)가 6000이하인 업무를 담당하는 직원(emp)의 모든 정보를 sub query를 이용해 조회.
+
+select *
+from emp
+where job_id in (select job_id
+                from job
+                where max_salary <= 6000);
 
 select *
 from emp e join job j on e.job_id = j.job_id
@@ -239,26 +274,24 @@ from emp
 where salary > all(select salary
                     from emp
                     where dept_id = 20);
+--where salary > (select max(salary) from emp where dept_id = 20);
 
 
 -- TODO: 부서별 급여의 평균중 가장 적은 부서의 평균 급여보다 보다 많이 받는 직원들이 이름, 급여, 업무를 sub query를 이용해 조회
 
 select emp_name, salary, job_id
 from emp
-where salary > any(select avg(salary)
-                  from emp
-                  group by dept_id);
+where salary > any(select avg(salary) from emp group by dept_id);
+--where salary > (select min(avg(salary)) from emp group by dept_id);
 
 -- TODO: 업무 id(job_id)가 'SA_REP' 인 직원들중 가장 많은 급여를 받는 직원보다 많은 급여를 받는 직원들의 이름(emp_name), 급여(salary), 업무(job_id) 를 sub query를 이용해 조회.
 
 select emp_name, salary, job_id
 from emp
-where salary > all(select salary
-                    from emp
-                    where job_id in 'SA_REP');
+where salary > all(select salary from emp where job_id in 'SA_REP');
+--where salary > (select max(salary) from emp where job_id in 'SA_REP');
 
-
-
+-- 비상관쿼리 실행 순서: subquery실행 -> subquery실행결과를 가지고 main query실행.
 /* ****************************************************************
 상관(연관) 쿼리
 메인쿼리문의 조회값을 서브쿼리의 조건에서 사용하는 쿼리.
@@ -266,8 +299,15 @@ where salary > all(select salary
 * ****************************************************************/
 -- 각 부서에서(DEPT) 급여(emp.salary)를 가장 많이 받는 직원들의 id(emp.emp_id), 이름(emp.emp_name), 연봉(emp.salary), 소속부서ID(dept.dept_id) 조회
 
-
-
+select e.emp_id,
+       e.emp_name,
+       e.salary,
+       e.dept_id
+from emp e
+where salary = (select max(salary)
+                from emp
+                where nvl(dept_id,0) = nvl(e.dept_id,0))
+order by e.dept_id;
 
 /* ******************************************************************************************************************
 EXISTS, NOT EXISTS 연산자 (상관(연관)쿼리와 같이 사용된다)
